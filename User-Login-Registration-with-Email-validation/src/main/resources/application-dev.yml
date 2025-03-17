@@ -30,3 +30,10 @@ spring:
         connectiontimeout: 5000
         timeout: 3000
         writetimeout: 5000
+
+
+  application:
+    security:
+      jwt:
+        secretKey;: Ewdus0Qrnbr5Yhgff5gVdJ5h6dXzwRT8
+        expirationInMs: 86400000
