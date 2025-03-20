@@ -1,39 +1,44 @@
-
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/login_register
-    username: postgres
-    password: Rayana2024
-    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/login_register # PostgreSQL connection URL
+    username: postgres # Database username
+    password: Rayana2024 # Database password
+    driver-class-name: org.postgresql.Driver # PostgreSQL driver class
+
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: update # Automatically update the database schema
+    show-sql: true # Show SQL queries in the logs
     properties:
       hibernate:
-        format_sql: true
-    database: postgresql
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true # Format SQL queries for better readability
+    database: postgresql # Specify the database type
+    database-platform: org.hibernate.dialect.PostgreSQLDialect # Hibernate dialect for PostgreSQL
 
   mail:
-    host: localhost
-    port: 1025
-    username: admin
-    password: admin
+    host: localhost # Mail server host
+    port: 1025 # Mail server port
+    username: admin # Mail server username
+    password: admin # Mail server password
     properties:
       mail:
         smtp:
-          trust: "*"
-        auth: true
+          trust: "*" # Trust all hosts for SMTP
+        auth: true # Enable SMTP authentication
         starttls:
-            enable: true
-        connectiontimeout: 5000
-        timeout: 3000
-        writetimeout: 5000
-
+          enable: true # Enable STARTTLS encryption
+        connectiontimeout: 5000 # Connection timeout in milliseconds
+        timeout: 3000 # Read timeout in milliseconds
+        writetimeout: 5000 # Write timeout in milliseconds
 
   application:
     security:
       jwt:
-        secretKey;: Ewdus0Qrnbr5Yhgff5gVdJ5h6dXzwRT8
-        expirationInMs: 86400000
+        secretKey: Ewdus0Qrnbr5Yhgff5gVdJ5h6dXzwRT8 # JWT secret key
+        expirationInMs: 86400000 # JWT expiration time in milliseconds (24 hours)
+    mailing:
+      frontend:
+        activationUrl: http://localhost:4200/activate-account # Frontend activation URL
+
+  server:
+    port: 8080 # Server port

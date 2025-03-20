@@ -1,16 +1,20 @@
 package com.yessinCoding.auth;
 
 import com.yessinCoding.email.EmailService;
+import com.yessinCoding.email.EmailTemplateName;
 import com.yessinCoding.entity.Token;
 import com.yessinCoding.entity.User;
 import com.yessinCoding.repository.RoleRepository;
 import com.yessinCoding.repository.TokenRepository;
 import com.yessinCoding.repository.UserRepository;
-import com.yessinCoding.role.Role;
-import jakarta.validation.Valid;
+import com.yessinCoding.security.JwtService;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -19,76 +23,92 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
-    private final RoleRepository roleRepository;
-    private final PasswordEncoder passwordEncoder;
+
     private final UserRepository userRepository;
-    private final TokenRepository tokenRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final RoleRepository roleRepository;
     private final EmailService emailService;
+    private final TokenRepository tokenRepository;
 
-    public void register(@Valid RegistrationRequest registrationRequest) {
-        // Debugging: Check if dependencies are injected
-        if (roleRepository == null) {
-            throw new IllegalStateException("roleRepository is not injected");
-        }
-        if (passwordEncoder == null) {
-            throw new IllegalStateException("passwordEncoder is not injected");
-        }
-        if (userRepository == null) {
-            throw new IllegalStateException("userRepository is not injected");
-        }
-        if (tokenRepository == null) {
-            throw new IllegalStateException("tokenRepository is not injected");
-        }
+    @Value("${spring.application.mailing.frontend.activationUrl}")
+    private String activationUrl;
 
-        // Retrieve the "USER" role from the role repository. If not found, throw an IllegalArgumentException.
-        Role userRole = roleRepository.findByName("USER")
-                .orElseThrow(() -> new IllegalArgumentException("Error: Role is not found"));
+    public void register(RegistrationRequest request) throws MessagingException {
+        var userRole = roleRepository.findByName("USER")
+                .orElseThrow(() -> new IllegalStateException("ROLE USER was not initiated"));
 
-        // Create a new User object using the builder pattern.
-        User user = User.builder()
-                .firstName(registrationRequest.getFirstName())
-                .lastName(registrationRequest.getLastName())
-                .email(registrationRequest.getEmail())
-                .password(passwordEncoder.encode(registrationRequest.getPassword()))
+        var user = User.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
                 .accountLocked(false)
                 .enabled(false)
                 .roles(List.of(userRole))
                 .build();
+
         userRepository.save(user);
         sendValidationEmail(user);
     }
 
-    private void sendValidationEmail(User user) {
-        // Send a validation email to the user.
-        String newToken = generateAndSaveActivationToken(user);
-        // send email
+    @Transactional
+    public void activateAccount(String token) throws MessagingException {
+        Token savedToken = tokenRepository.findByToken(token)
+                .orElseThrow(() -> new RuntimeException("Invalid token"));
 
+        if (LocalDateTime.now().isAfter(savedToken.getExpiresAt())) {
+            sendValidationEmail(savedToken.getUser());
+            throw new RuntimeException("Activation token has expired. A new token has been sent to the same email address");
+        }
+
+        var user = userRepository.findById(savedToken.getUser().getId())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        user.setEnabled(true);
+        userRepository.save(user);
+
+        savedToken.setValidatedAt(LocalDateTime.now());
+        tokenRepository.save(savedToken);
     }
 
     private String generateAndSaveActivationToken(User user) {
-        // generate a new token
-        String generatedToken = generateAndSaveActivationCode(6);
-        // save the token
-        Token token = Token.builder()
+        String generatedToken = generateActivationCode(6);
+
+        var token = Token.builder()
                 .token(generatedToken)
                 .createdAt(LocalDateTime.now())
                 .expiresAt(LocalDateTime.now().plusMinutes(15))
                 .user(user)
                 .build();
-        tokenRepository.save(token);
 
+        tokenRepository.save(token);
         return generatedToken;
     }
 
-    private String generateAndSaveActivationCode(int length) {
-        // generate a random code
+    private void sendValidationEmail(User user) throws MessagingException {
+        var newToken = generateAndSaveActivationToken(user);
+
+        emailService.sendEmail(
+                user.getEmail(),
+                user.fullName(),
+                EmailTemplateName.ACTIVATE_ACCOUNT,
+                activationUrl,
+                newToken,
+                "Account activation"
+        );
+    }
+
+    private String generateActivationCode(int length) {
         String characters = "0123456789";
         StringBuilder codeBuilder = new StringBuilder();
         SecureRandom secureRandom = new SecureRandom();
+
         for (int i = 0; i < length; i++) {
-            int randomIndex = secureRandom.nextInt(characters.length()); // generate a random index 0-9
+            int randomIndex = secureRandom.nextInt(characters.length());
             codeBuilder.append(characters.charAt(randomIndex));
         }
+
         return codeBuilder.toString();
     }
 }

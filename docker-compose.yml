@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   postgres:
     container_name: postgres-sql-bsn
@@ -10,7 +12,7 @@ services:
     volumes:
       - postgres:/var/lib/postgresql/data
     ports:
-      - "5433:5432"  # Changed the host port to 5433
+      - "5433:5432"
     networks:
       - spring-demo
     restart: unless-stopped
