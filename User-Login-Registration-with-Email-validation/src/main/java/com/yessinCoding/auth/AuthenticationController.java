@@ -28,5 +28,21 @@ public class AuthenticationController {
         return ResponseEntity.accepted().build();
     }
 
-    // Other endpoints...
+    @PostMapping("/login")
+
+public ResponseEntity<AuthenticationResponse> login(
+        @RequestBody @Valid LoginRequest request
+    )
+    {
+        return  ResponseEntity.ok(service
+                .login(request));
+
+    }
+
+    @GetMapping("/confirm")
+    public void confirm(@RequestParam("token") String token) throws MessagingException {
+        service.activateAccount(token);
+    }
+
+
 }

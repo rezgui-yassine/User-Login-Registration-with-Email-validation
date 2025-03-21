@@ -11,6 +11,8 @@ import com.yessinCoding.security.JwtService;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 
 @Service
@@ -30,6 +33,7 @@ public class AuthenticationService {
     private final RoleRepository roleRepository;
     private final EmailService emailService;
     private final TokenRepository tokenRepository;
+    private final AuthenticationManager authenticationManager;
 
     @Value("${spring.application.mailing.frontend.activationUrl}")
     private String activationUrl;
@@ -53,7 +57,7 @@ public class AuthenticationService {
     }
 
     @Transactional
-    public void activateAccount(String token) throws MessagingException {
+    public void  activateAccount(String token) throws MessagingException {
         Token savedToken = tokenRepository.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("Invalid token"));
 
@@ -110,5 +114,27 @@ public class AuthenticationService {
         }
 
         return codeBuilder.toString();
+    }
+
+    public AuthenticationResponse login(LoginRequest request) {
+        // 1: Authenticate the user using the provided email and password
+        var auth = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getEmail(),
+                        request.getPassword()
+                )
+        );
+        // 2: Create a claims map to store additional information
+        var claims = new HashMap<String, Object>();
+        var user = ((User) auth.getPrincipal());
+        // 3: Add the user's full name to the claims
+        claims.put("fullName", user.fullName());
+        // 4: Generate a JWT token with the claims and user details
+        var jwtToken = jwtService.generateToken(claims, user);
+
+        // Return the authentication response with the generated token
+        return AuthenticationResponse.builder()
+                .token(jwtToken)
+                .build();
     }
 }
