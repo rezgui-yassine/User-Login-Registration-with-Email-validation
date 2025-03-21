@@ -1,9 +1,9 @@
 package com.yessinCoding.email;
 
-
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -15,53 +15,53 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.springframework.mail.javamail.MimeMessageHelper.MULTIPART_MODE_MIXED;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class EmailService {
-
-    private final JavaMailSender mailSender ;
+    private final JavaMailSender mailSender;
     private final SpringTemplateEngine templateEngine;
 
-    // todo
     @Async
-
-    // TODO: Implement the sendEmail method
-    public void sendEmail (
-            String to ,
-            String username ,
-            EmailTemplateName emailTemplateName ,
-            String confirmationUrl ,
-            String activationCode ,
+    public void sendEmail(
+            String to,
+            String username,
+            EmailTemplateName emailTemplate,
+            String confirmationUrl,
+            String activationCode,
             String subject
     ) throws MessagingException {
         String templateName;
-        if (emailTemplateName == null) {
-            templateName = "confirm-email";
+        if (emailTemplate == null) {
+            templateName = "activate_account"; // Ensure this matches the template file name
         } else {
-            templateName = emailTemplateName.name();
+            templateName = emailTemplate.getName();
         }
-
         MimeMessage mimeMessage = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(
                 mimeMessage,
-                MimeMessageHelper.MULTIPART_MODE_MIXED,
+                MULTIPART_MODE_MIXED,
                 UTF_8.name()
-
         );
         Map<String, Object> properties = new HashMap<>();
         properties.put("username", username);
         properties.put("confirmationUrl", confirmationUrl);
-        properties.put("activationCode", activationCode);
+        properties.put("activation_code", activationCode);
 
         Context context = new Context();
         context.setVariables(properties);
 
-        helper.setFrom("yassinedebich214@gmail.com");
+        helper.setFrom("contact@aliboucoding.com");
         helper.setTo(to);
         helper.setSubject(subject);
-       String template = templateEngine.process(templateName, context);
-         helper.setText(template, true);
+
+        String template = templateEngine.process(templateName, context);
+        log.info("Processed email template: {}", template); // Log the processed template
+
+        helper.setText(template, true);
+
         mailSender.send(mimeMessage);
     }
 }

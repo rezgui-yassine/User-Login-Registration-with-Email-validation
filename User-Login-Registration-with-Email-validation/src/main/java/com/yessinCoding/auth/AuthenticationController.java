@@ -39,8 +39,10 @@ public ResponseEntity<AuthenticationResponse> login(
 
     }
 
-    @GetMapping("/confirm")
-    public void confirm(@RequestParam("token") String token) throws MessagingException {
+    @GetMapping("/activate-account")
+    public void confirm(
+            @RequestParam String token
+    ) throws MessagingException {
         service.activateAccount(token);
     }
 

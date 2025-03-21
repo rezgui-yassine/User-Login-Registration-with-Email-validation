@@ -10,13 +10,13 @@ import com.yessinCoding.repository.UserRepository;
 import com.yessinCoding.security.JwtService;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class AuthenticationService {
 
@@ -56,27 +57,35 @@ public class AuthenticationService {
         sendValidationEmail(user);
     }
 
-    @Transactional
-    public void  activateAccount(String token) throws MessagingException {
+
+    public void activateAccount(String token) throws MessagingException {
         Token savedToken = tokenRepository.findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid token"));
+                .orElseThrow(() -> {
+                    log.error("Invalid token: {}", token);
+                    return new RuntimeException("Invalid token");
+                });
 
         if (LocalDateTime.now().isAfter(savedToken.getExpiresAt())) {
+            log.error("Token expired: {}", token);
             sendValidationEmail(savedToken.getUser());
             throw new RuntimeException("Activation token has expired. A new token has been sent to the same email address");
         }
 
         var user = userRepository.findById(savedToken.getUser().getId())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> {
+                    log.error("User not found for token: {}", token);
+                    return new UsernameNotFoundException("User not found");
+                });
 
         user.setEnabled(true);
         userRepository.save(user);
 
-        savedToken.setValidatedAt(LocalDateTime.now());
+        savedToken.setValidatedAt(LocalDateTime.now()); // Set the validatedAt field
         tokenRepository.save(savedToken);
+        log.info("Account activated successfully for user: {}", user.getEmail());
     }
 
-    private String generateAndSaveActivationToken(User user) {
+    private String generateAndSaveActivationToken(User user)  {
         String generatedToken = generateActivationCode(6);
 
         var token = Token.builder()

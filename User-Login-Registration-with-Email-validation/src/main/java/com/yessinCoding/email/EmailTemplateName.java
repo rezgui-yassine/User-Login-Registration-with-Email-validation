@@ -2,14 +2,9 @@ package com.yessinCoding.email;
 
 import lombok.Getter;
 
-import java.security.PrivilegedAction;
-
 @Getter
-
 public enum EmailTemplateName {
-
-    ACTIVATE_ACCOUNT("activate-account");
-
+    ACTIVATE_ACCOUNT("activate_account"); // Ensure this matches the template file name
 
     private final String name;
 
