@@ -34,7 +34,7 @@ spring:
   application:
     security:
       jwt:
-        secretKey: Ewdus0Qrnbr5Yhgff5gVdJ5h6dXzwRT8 # JWT secret key
+        secretKey: 0mn0usPNCj5ZTGVvzLceBNxIizxa1OhiRuuUZFBbjOMk # JWT secret key
         expirationInMs: 86400000 # JWT expiration time in milliseconds (24 hours)
     mailing:
       frontend:
