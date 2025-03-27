@@ -7,8 +7,16 @@ spring:
       max-file-size: 50MB # Set maximum file upload size to 50MB
 
   # SpringDoc (OpenAPI) configuration
-  springdoc:
-    default-consumes-media-type: application/json # Set default media type for requests
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: alpha
+    tagsSorter: alpha
+    doc-expansion: none
+  api-docs:
+    path: /v3/api-docs
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
 
 server:
   servlet:

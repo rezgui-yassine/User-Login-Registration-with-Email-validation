@@ -16,18 +16,19 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableAsync
 public class UserLoginRegistrationWithEmailValidationApiApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(UserLoginRegistrationWithEmailValidationApiApplication.class, args);
+    public static void main(String[] args) {
+        SpringApplication.run(UserLoginRegistrationWithEmailValidationApiApplication.class, args);
 
 
-	}
-	@Bean
-	public CommandLineRunner runner(RoleRepository roleRepository) {
-		return args -> {
-			if (roleRepository.findByName("USER").isEmpty()) {
-				roleRepository.save(Role.builder().name("USER").build());
-			}
-		};
-	}
+    }
+
+    @Bean
+    public CommandLineRunner runner(RoleRepository roleRepository) {
+        return args -> {
+            if (roleRepository.findByName("USER").isEmpty()) {
+                roleRepository.save(Role.builder().name("USER").build());
+            }
+        };
+    }
 
 }
