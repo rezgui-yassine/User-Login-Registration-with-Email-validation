@@ -4,6 +4,9 @@ package com.yessinCoding.handler;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 
+import java.util.Map;
+import java.util.Set;
+
 @Getter
 @Setter
 @Builder
@@ -12,5 +15,8 @@ import lombok.*;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExceptionResponse {
     private Integer businessErrorCode;
-    private String businessErrorMessage;
+    private String businessErrorDescription;
+    private String error;
+    private Set<String> validationsError;
+    private Map<String,String> errors;
 }
