@@ -1,9 +1,6 @@
 package com.yessinCoding.auth;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,12 +9,14 @@ import lombok.Setter;
 @Setter
 @Builder
 public class LoginRequest {
-    @Email(message = "Email is not Formatted")
-    @NotEmpty(message = "Email is  mandatory")
-    @NotBlank(message="email is mandatory")
+
+    @Email(message = "Email is not well formatted")
+    @NotEmpty(message = "Email is mandatory")
+    @NotNull(message = "Email is mandatory")
     private String email;
-    @NotEmpty(message = "password is required")
-    @NotBlank(message = "password is mandatory")
-    @Size(min = 8, max = 20, message = "password must be between 8 and 20 characters")
+
+    @NotEmpty(message = "Password is mandatory")
+    @NotNull(message = "Password is mandatory")
+    @Size(min = 8, message = "Password should be 8 characters long minimum")
     private String password;
 }
